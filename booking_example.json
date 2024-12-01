@@ -1,0 +1,60 @@
+{
+   "registrar_email": "user@example.com",
+   "outbound_trip": {
+      "departure_feeder": {
+         "type": "bus",
+         "budget": "economy",
+         "origin_city": "New York",
+         "destination_city": "Boston",
+         "price": 100
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "economy",
+         "origin_city": "Boston",
+         "destination_city": "Amsterdam",
+         "price": 2000
+      },
+      "arrival_feeder": {
+         "type": "bus",
+         "budget": "economy",
+         "origin_city": "Amsterdam",
+         "destination_city": "Den Haag",
+         "price": 100
+      },
+      "total_price": 2200
+   },
+   "vacation": {
+      "city": "Amsterdam",
+      "hotel_budget": "luxury",
+      "sightseeing_budget": "standard",
+      "total_price": 3000
+   },
+   "vacation_day_count": 7,
+   "inbound_trip": {
+      "departure_feeder": {
+         "type": "bus",
+         "budget": "economy",
+         "origin_city": "Den Haag",
+         "destination_city": "Amsterdam",
+         "price": 100
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "economy",
+         "origin_city": "Amsterdam",
+         "destination_city": "Boston",
+         "price": 2000
+      },
+      "arrival_feeder": {
+         "type": "bus",
+         "budget": "economy",
+         "origin_city": "Boston",
+         "destination_city": "New York",
+         "price": 100
+      },
+      "total_price": 2200
+   },
+   "total_days": 9,
+   "total_price": 1500
+}
