@@ -1,0 +1,122 @@
+{
+   "registrar_email": "newuser@example.com",
+   "outbound_trip": {
+      "departure_feeder": {
+         "type": "train",
+         "budget": "business",
+         "origin_city": "Los Angeles",
+         "destination_city": "San Francisco",
+         "price": 150
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "business",
+         "origin_city": "San Francisco",
+         "destination_city": "Tokyo",
+         "price": 2500
+      },
+      "arrival_feeder": {
+         "type": "taxi",
+         "budget": "standard",
+         "origin_city": "Tokyo",
+         "destination_city": "Yokohama",
+         "price": 200
+      },
+      "total_price": 2850
+   },
+   "vacation": {
+      "city": "Yokohama",
+      "hotel_budget": "luxury",
+      "sightseeing_budget": "premium",
+      "total_price": 4000
+   },
+   "vacation_day_count": 10,
+   "inbound_trip": {
+      "departure_feeder": {
+         "type": "taxi",
+         "budget": "standard",
+         "origin_city": "Yokohama",
+         "destination_city": "Tokyo",
+         "price": 200
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "business",
+         "origin_city": "Tokyo",
+         "destination_city": "San Francisco",
+         "price": 2500
+      },
+      "arrival_feeder": {
+         "type": "train",
+         "budget": "business",
+         "origin_city": "San Francisco",
+         "destination_city": "Los Angeles",
+         "price": 150
+      },
+      "total_price": 2850
+   },
+   "total_days": 12,
+   "total_price": 9700,
+   "persons": [
+      {
+         "nationality": "canadian",
+         "passport_number": "9876543210",
+         "first_name": "alex",
+         "last_name": "brown"
+      },
+      {
+         "nationality": "mexican",
+         "passport_number": "8765432109",
+         "first_name": "carlos",
+         "last_name": "hernandez"
+      },
+      {
+         "nationality": "italian",
+         "passport_number": "7654321098",
+         "first_name": "maria",
+         "last_name": "rossi"
+      },
+      {
+         "nationality": "spanish",
+         "passport_number": "6543210987",
+         "first_name": "juan",
+         "last_name": "garcia"
+      },
+      {
+         "nationality": "russian",
+         "passport_number": "5432109876",
+         "first_name": "olga",
+         "last_name": "ivanova"
+      },
+      {
+         "nationality": "brazilian",
+         "passport_number": "4321098765",
+         "first_name": "pedro",
+         "last_name": "silva"
+      },
+      {
+         "nationality": "south african",
+         "passport_number": "3210987654",
+         "first_name": "thabo",
+         "last_name": "mokoena"
+      },
+      {
+         "nationality": "south korean",
+         "passport_number": "2109876543",
+         "first_name": "ji-hoon",
+         "last_name": "kim"
+      },
+      {
+         "nationality": "argentinian",
+         "passport_number": "1098765432",
+         "first_name": "sofia",
+         "last_name": "gonzalez"
+      },
+      {
+         "nationality": "nigerian",
+         "passport_number": "0987654321",
+         "first_name": "chinedu",
+         "last_name": "okafor"
+      }
+   ]
+}

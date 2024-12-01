@@ -1,0 +1,122 @@
+{
+   "registrar_email": "newuser_2@example.com",
+   "outbound_trip": {
+      "departure_feeder": {
+         "type": "train",
+         "budget": "business",
+         "origin_city": "Los Angeles",
+         "destination_city": "San Francisco",
+         "price": 150
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "business",
+         "origin_city": "San Francisco",
+         "destination_city": "Tokyo",
+         "price": 2500
+      },
+      "arrival_feeder": {
+         "type": "taxi",
+         "budget": "standard",
+         "origin_city": "Tokyo",
+         "destination_city": "Yokohama",
+         "price": 200
+      },
+      "total_price": 2850
+   },
+   "vacation": {
+      "city": "Yokohama",
+      "hotel_budget": "luxury",
+      "sightseeing_budget": "premium",
+      "total_price": 4000
+   },
+   "vacation_day_count": 10,
+   "inbound_trip": {
+      "departure_feeder": {
+         "type": "taxi",
+         "budget": "standard",
+         "origin_city": "Yokohama",
+         "destination_city": "Tokyo",
+         "price": 200
+      },
+      "trunk": {
+         "type": "airplane",
+         "budget": "business",
+         "origin_city": "Tokyo",
+         "destination_city": "San Francisco",
+         "price": 2500
+      },
+      "arrival_feeder": {
+         "type": "train",
+         "budget": "business",
+         "origin_city": "San Francisco",
+         "destination_city": "Los Angeles",
+         "price": 150
+      },
+      "total_price": 2850
+   },
+   "total_days": 12,
+   "total_price": 9700,
+   "persons": [
+      {
+         "nationality": "indonesian",
+         "passport_number": "1234567890",
+         "first_name": "asep",
+         "last_name": "suriadi"
+      },
+      {
+         "nationality": "american",
+         "passport_number": "0987654321",
+         "first_name": "john",
+         "last_name": "doe"
+      },
+      {
+         "nationality": "british",
+         "passport_number": "1122334455",
+         "first_name": "jane",
+         "last_name": "smith"
+      },
+      {
+         "nationality": "canadian",
+         "passport_number": "2233445566",
+         "first_name": "michael",
+         "last_name": "johnson"
+      },
+      {
+         "nationality": "australian",
+         "passport_number": "3344556677",
+         "first_name": "emily",
+         "last_name": "davis"
+      },
+      {
+         "nationality": "german",
+         "passport_number": "4455667788",
+         "first_name": "hans",
+         "last_name": "muller"
+      },
+      {
+         "nationality": "french",
+         "passport_number": "5566778899",
+         "first_name": "marie",
+         "last_name": "curie"
+      },
+      {
+         "nationality": "japanese",
+         "passport_number": "6677889900",
+         "first_name": "akira",
+         "last_name": "kurosawa"
+      },
+      {
+         "nationality": "chinese",
+         "passport_number": "7788990011",
+         "first_name": "li",
+         "last_name": "wang"
+      },
+      {
+         "nationality": "indian",
+         "passport_number": "8899001122",
+         "first_name": "arjun",
+         "last_name": "patel"
+      }
+   ]
+}

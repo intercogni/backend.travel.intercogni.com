@@ -2,13 +2,18 @@ package main
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/rs/cors"
 )
 
 var db *sql.DB
@@ -23,37 +28,275 @@ func main() {
 
 	fmt.Printf("starting...\n")
 
-	http.HandleFunc("/api/bookings/create-complex", createComplexBooking)
+	mux := http.NewServeMux()
 
-	http.HandleFunc("/users/create", createUser)
-	http.HandleFunc("/users/edit", editUser)
-	http.HandleFunc("/users/delete", deleteUser)
+	mux.HandleFunc("/api/bookings/create-complex", createComplexBooking)
+	mux.HandleFunc("/api/set-general-info", updateGeneralInfo)
+	mux.HandleFunc("/users/create", createUser)
+	mux.HandleFunc("/users/edit", editUser)
+	mux.HandleFunc("/users/delete", deleteUser)
+	mux.HandleFunc("/bookings/create", createBooking)
+	mux.HandleFunc("/bookings/edit", editBooking)
+	mux.HandleFunc("/bookings/delete", deleteBooking)
+	mux.HandleFunc("/bookings_persons/create", createBookingPerson)
+	mux.HandleFunc("/bookings_persons/edit", editBookingPerson)
+	mux.HandleFunc("/bookings_persons/delete", deleteBookingPerson)
+	mux.HandleFunc("/persons/create", createPerson)
+	mux.HandleFunc("/persons/edit", editPerson)
+	mux.HandleFunc("/persons/delete", deletePerson)
+	mux.HandleFunc("/vacations/create", createVacation)
+	mux.HandleFunc("/vacations/edit", editVacation)
+	mux.HandleFunc("/vacations/delete", deleteVacation)
+	mux.HandleFunc("/trip/create", createTrip)
+	mux.HandleFunc("/trip/edit", editTrip)
+	mux.HandleFunc("/trip/delete", deleteTrip)
+	mux.HandleFunc("/leg/create", createLeg)
+	mux.HandleFunc("/leg/edit", editLeg)
+	mux.HandleFunc("/leg/delete", deleteLeg)
 
-	http.HandleFunc("/bookings/create", createBooking)
-	http.HandleFunc("/bookings/edit", editBooking)
-	http.HandleFunc("/bookings/delete", deleteBooking)
+	handler := cors.Default().Handler(mux)
+	http.ListenAndServe(":8080", handler)
+}
 
-	http.HandleFunc("/bookings_persons/create", createBookingPerson)
-	http.HandleFunc("/bookings_persons/edit", editBookingPerson)
-	http.HandleFunc("/bookings_persons/delete", deleteBookingPerson)
+type Airport struct {
+	City     string
+	Name     string
+	Lat      float64
+	Long     float64
+	IATACode string
+}
 
-	http.HandleFunc("/persons/create", createPerson)
-	http.HandleFunc("/persons/edit", editPerson)
-	http.HandleFunc("/persons/delete", deletePerson)
+func haversine(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371 // Earth radius in kilometers
+	dLat := (lat2 - lat1) * math.Pi / 180.0
+	dLon := (lon2 - lon1) * math.Pi / 180.0
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Cos(lat1*math.Pi/180.0)*math.Cos(lat2*math.Pi/180.0)*math.Sin(dLon/2)*math.Sin(dLon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+	return R * c
+}
 
-	http.HandleFunc("/vacations/create", createVacation)
-	http.HandleFunc("/vacations/edit", editVacation)
-	http.HandleFunc("/vacations/delete", deleteVacation)
+func loadAirports(filePath string) ([]Airport, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-	http.HandleFunc("/trip/create", createTrip)
-	http.HandleFunc("/trip/edit", editTrip)
-	http.HandleFunc("/trip/delete", deleteTrip)
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
 
-	http.HandleFunc("/leg/create", createLeg)
-	http.HandleFunc("/leg/edit", editLeg)
-	http.HandleFunc("/leg/delete", deleteLeg)
+	var airports []Airport
+	for _, record := range records[1:] {
+		lat, _ := strconv.ParseFloat(record[4], 64)
+		long, _ := strconv.ParseFloat(record[5], 64)
+		// fmt.Printf("Lat: %f, Long: %f\n", lat, long)
+		airports = append(airports, Airport{
+			City:     record[10],
+			Name:     record[3],
+			Lat:      lat,
+			Long:     long,
+			IATACode: record[13],
+		})
+	}
+	return airports, nil
+}
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+// func updateGeneralInfo(w http.ResponseWriter, r *http.Request) {
+// 	var generalInfo struct {
+// 		OriginCity struct {
+// 			Name string `json:"name"`
+// 			Lat  string `json:"lat"`
+// 			Long string `json:"long"`
+// 		} `json:"origin_city"`
+// 		OriginAirportCity struct {
+// 			Name        string `json:"name"`
+// 			Description string `json:"description"`
+// 			Lat         string `json:"lat"`
+// 			Long        string `json:"long"`
+// 			IATACode    string `json:"iata_code"`
+// 		} `json:"origin_airport_city"`
+// 		DestinationAirportCity struct {
+// 			Name        string `json:"name"`
+// 			Description string `json:"description"`
+// 			Lat         string `json:"lat"`
+// 			Long        string `json:"long"`
+// 			IATACode    string `json:"iata_code"`
+// 		} `json:"destination_airport_city"`
+// 		DestinationCity struct {
+// 			Name string `json:"name"`
+// 			Lat  string `json:"lat"`
+// 			Long string `json:"long"`
+// 		} `json:"destination_city"`
+// 	}
+
+// 	if err := json.NewDecoder(r.Body).Decode(&generalInfo); err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	fmt.Printf("%+v\n", generalInfo)
+
+// airports, err := loadAirports("large_airports.csv")
+// if err != nil {
+// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+// 	return
+// }
+
+// originLat, _ := strconv.ParseFloat(generalInfo.OriginCity.Lat, 64)
+// originLong, _ := strconv.ParseFloat(generalInfo.OriginCity.Long, 64)
+
+// var closestAirport Airport
+// minDistance := math.MaxFloat64
+
+// for _, airport := range airports {
+// 	distance := haversine(originLat, originLong, airport.Lat, airport.Long)
+// 	if distance < minDistance {
+// 		minDistance = distance
+// 		closestAirport = airport
+// 	}
+// }
+
+// generalInfo.OriginAirportCity = struct {
+// 	Name        string `json:"name"`
+// 	Description string `json:"description"`
+// 	Lat         string `json:"lat"`
+// 	Long        string `json:"long"`
+// 	IATACode    string `json:"iata_code"`
+// }{
+// 	Name:        closestAirport.Name,
+// 	Description: closestAirport.Description,
+// 	Lat:         strconv.FormatFloat(closestAirport.Lat, 'f', 6, 64),
+// 	Long:        strconv.FormatFloat(closestAirport.Long, 'f', 6, 64),
+// 	IATACode:    closestAirport.IATACode,
+// }
+
+// 	w.Header().Set("Content-Type", "application/json")
+// 	if err := json.NewEncoder(w).Encode(generalInfo); err != nil {
+// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+// 		return
+// 	}
+// }
+
+func updateGeneralInfo(w http.ResponseWriter, r *http.Request) {
+	var generalInfo struct {
+		Origin struct {
+			Country string  `json:"country"`
+			State   string  `json:"state"`
+			City    string  `json:"city"`
+			Lat     float64 `json:"lat"`
+			Long    float64 `json:"long"`
+			ToNext  float64 `json:"to_next"`
+		} `json:"origin"`
+		OriginAirport struct {
+			City     string  `json:"city"`
+			Name     string  `json:"name"`
+			Lat      float64 `json:"lat"`
+			Long     float64 `json:"long"`
+			IATACode string  `json:"iata_code"`
+			ToBefore float64 `json:"to_before"`
+			ToNext   float64 `json:"to_next"`
+		} `json:"origin_airport"`
+		DestinationAirport struct {
+			City     string  `json:"city"`
+			Name     string  `json:"name"`
+			Lat      float64 `json:"lat"`
+			Long     float64 `json:"long"`
+			IATACode string  `json:"iata_code"`
+			ToBefore float64 `json:"to_before"`
+			ToNext   float64 `json:"to_next"`
+		} `json:"destination_airport"`
+		Destination struct {
+			Country  string  `json:"country"`
+			State    string  `json:"state"`
+			City     string  `json:"city"`
+			Lat      float64 `json:"lat"`
+			Long     float64 `json:"long"`
+			ToBefore float64 `json:"to_before"`
+		} `json:"destination"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&generalInfo); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("%+v\n", generalInfo)
+
+	generalInfo.OriginAirport.Name = "lorem ipsum"
+	generalInfo.DestinationAirport.Name = "lorem ipsum"
+
+	airports, err := loadAirports("large_airports.csv")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	originLat := generalInfo.Origin.Lat
+	originLong := generalInfo.Origin.Long
+	var closestOriginAirport Airport
+	minOriginDistance := math.MaxFloat64
+	// for _, airport := range airports {
+	// 	fmt.Printf("City: %s, Name: %s, Lat: %f, Long: %f, IATACode: %s\n", airport.City, airport.Name, airport.Lat, airport.Long, airport.IATACode)
+	// }
+	for _, airport := range airports {
+		fmt.Printf("Checking airport: %s, %s\n", airport.City, airport.Name)
+		distance := haversine(originLat, originLong, airport.Lat, airport.Long)
+		if distance < minOriginDistance {
+			minOriginDistance = distance
+			closestOriginAirport = airport
+		}
+	}
+	generalInfo.OriginAirport = struct {
+		City     string  `json:"city"`
+		Name     string  `json:"name"`
+		Lat      float64 `json:"lat"`
+		Long     float64 `json:"long"`
+		IATACode string  `json:"iata_code"`
+	}{
+		City:     closestOriginAirport.City,
+		Name:     closestOriginAirport.Name,
+		Lat:      closestOriginAirport.Lat,
+		Long:     closestOriginAirport.Long,
+		IATACode: closestOriginAirport.IATACode,
+	}
+
+	destinationLat := generalInfo.Destination.Lat
+	destinationLong := generalInfo.Destination.Long
+	var closestDestinationAirport Airport
+	minDestinationDistance := math.MaxFloat64
+	// for _, airport := range airports {
+	// 	fmt.Printf("City: %s, Name: %s, Lat: %f, Long: %f, IATACode: %s\n", airport.City, airport.Name, airport.Lat, airport.Long, airport.IATACode)
+	// }
+	for _, airport := range airports {
+		fmt.Printf("Checking airport: %s, %s\n", airport.City, airport.Name)
+		distance := haversine(destinationLat, destinationLong, airport.Lat, airport.Long)
+		if distance < minDestinationDistance {
+			minDestinationDistance = distance
+			closestDestinationAirport = airport
+		}
+	}
+	generalInfo.DestinationAirport = struct {
+		City     string  `json:"city"`
+		Name     string  `json:"name"`
+		Lat      float64 `json:"lat"`
+		Long     float64 `json:"long"`
+		IATACode string  `json:"iata_code"`
+	}{
+		City:     closestDestinationAirport.City,
+		Name:     closestDestinationAirport.Name,
+		Lat:      closestDestinationAirport.Lat,
+		Long:     closestDestinationAirport.Long,
+		IATACode: closestDestinationAirport.IATACode,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(generalInfo); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func createUser(w http.ResponseWriter, r *http.Request) {
@@ -178,6 +421,12 @@ func createComplexBooking(w http.ResponseWriter, r *http.Request) {
 		} `json:"inbound_trip"`
 		TotalDays  int `json:"total_days"`
 		TotalPrice int `json:"total_price"`
+		Persons    []struct {
+			Nationality    string `json:"nationality"`
+			PassportNumber string `json:"passport_number"`
+			FirstName      string `json:"first_name"`
+			LastName       string `json:"last_name"`
+		} `json:"persons"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&booking); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -205,11 +454,68 @@ func createComplexBooking(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Inserting booking")
-	_, err = tx.Exec("INSERT INTO bookings (registrar_email, vacation_day_count, total_days, total_price) VALUES (?, ?, ?, ?)",
+	res, err := tx.Exec("INSERT INTO bookings (registrar_email, vacation_day_count, total_days, total_price) VALUES (?, ?, ?, ?)",
 		booking.RegistrarEmail, booking.VacationDayCount, booking.TotalDays, booking.TotalPrice)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	bookingID, err := res.LastInsertId()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Insert persons and link them to the booking
+	for _, person := range booking.Persons {
+		err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM persons WHERE nationality = ? AND passport_number = ? AND first_name = ? AND last_name = ?)",
+			person.Nationality, person.PassportNumber, person.FirstName, person.LastName).Scan(&exists)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !exists {
+			fmt.Println("Inserting person")
+			_, err = tx.Exec("INSERT INTO persons (nationality, passport_number, first_name, last_name) VALUES (?, ?, ?, ?)",
+				person.Nationality, person.PassportNumber, person.FirstName, person.LastName)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+
+		var personID int
+		err = tx.QueryRow("SELECT id FROM persons WHERE nationality = ? AND passport_number = ? AND first_name = ? AND last_name = ?",
+			person.Nationality, person.PassportNumber, person.FirstName, person.LastName).Scan(&personID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println("Linking person to booking")
+		_, err = tx.Exec("INSERT INTO bookings_persons (booking_id, person_id) VALUES (?, ?)", bookingID, personID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// Insert vacation
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM vacations WHERE city = ? AND hotel_budget = ? AND sightseeing_budget = ? AND total_price = ?)",
+		booking.Vacation.City, booking.Vacation.HotelBudget, booking.Vacation.SightseeingBudget, booking.Vacation.TotalPrice).Scan(&exists)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !exists {
+		fmt.Println("Inserting vacation")
+		_, err = tx.Exec("INSERT INTO vacations (city, hotel_budget, sightseeing_budget, total_price) VALUES (?, ?, ?, ?)",
+			booking.Vacation.City, booking.Vacation.HotelBudget, booking.Vacation.SightseeingBudget, booking.Vacation.TotalPrice)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	fmt.Println("testing outbound trip departure feeder")
@@ -257,23 +563,6 @@ func createComplexBooking(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Inserting outbound trip arrival feeder")
 		_, err = tx.Exec("INSERT INTO leg (type, budget, origin_city, destination_city, price) VALUES (?, ?, ?, ?, ?)",
 			booking.OutboundTrip.ArrivalFeeder.Type, booking.OutboundTrip.ArrivalFeeder.Budget, booking.OutboundTrip.ArrivalFeeder.OriginCity, booking.OutboundTrip.ArrivalFeeder.DestinationCity, booking.OutboundTrip.ArrivalFeeder.Price)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	fmt.Println("testing vacation")
-	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM vacations WHERE city = ? AND hotel_budget = ? AND sightseeing_budget = ? AND total_price = ?)",
-		booking.Vacation.City, booking.Vacation.HotelBudget, booking.Vacation.SightseeingBudget, booking.Vacation.TotalPrice).Scan(&exists)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if !exists {
-		fmt.Println("Inserting vacation")
-		_, err = tx.Exec("INSERT INTO vacations (city, hotel_budget, sightseeing_budget, total_price) VALUES (?, ?, ?, ?)",
-			booking.Vacation.City, booking.Vacation.HotelBudget, booking.Vacation.SightseeingBudget, booking.Vacation.TotalPrice)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -329,6 +618,101 @@ func createComplexBooking(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+	}
+
+	fmt.Println("inserting outbound legs into trip")
+	var outboundDepartureFeederID, outboundTrunkID, outboundArrivalFeederID int
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.OutboundTrip.DepartureFeeder.Type, booking.OutboundTrip.DepartureFeeder.Budget, booking.OutboundTrip.DepartureFeeder.OriginCity, booking.OutboundTrip.DepartureFeeder.DestinationCity, booking.OutboundTrip.DepartureFeeder.Price).Scan(&outboundDepartureFeederID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.OutboundTrip.Trunk.Type, booking.OutboundTrip.Trunk.Budget, booking.OutboundTrip.Trunk.OriginCity, booking.OutboundTrip.Trunk.DestinationCity, booking.OutboundTrip.Trunk.Price).Scan(&outboundTrunkID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.OutboundTrip.ArrivalFeeder.Type, booking.OutboundTrip.ArrivalFeeder.Budget, booking.OutboundTrip.ArrivalFeeder.OriginCity, booking.OutboundTrip.ArrivalFeeder.DestinationCity, booking.OutboundTrip.ArrivalFeeder.Price).Scan(&outboundArrivalFeederID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Inserting outbound trip into trip table")
+	_, err = tx.Exec("INSERT INTO trip (departure_feeder, trunk, arrival_feeder, total_price) VALUES (?, ?, ?, ?)",
+		outboundDepartureFeederID, outboundTrunkID, outboundArrivalFeederID, booking.OutboundTrip.TotalPrice)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("inserting inbound legs into trip")
+	var inboundDepartureFeederID, inboundTrunkID, inboundArrivalFeederID int
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.InboundTrip.DepartureFeeder.Type, booking.InboundTrip.DepartureFeeder.Budget, booking.InboundTrip.DepartureFeeder.OriginCity, booking.InboundTrip.DepartureFeeder.DestinationCity, booking.InboundTrip.DepartureFeeder.Price).Scan(&inboundDepartureFeederID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.InboundTrip.Trunk.Type, booking.InboundTrip.Trunk.Budget, booking.InboundTrip.Trunk.OriginCity, booking.InboundTrip.Trunk.DestinationCity, booking.InboundTrip.Trunk.Price).Scan(&inboundTrunkID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	err = tx.QueryRow("SELECT id FROM leg WHERE type = ? AND budget = ? AND origin_city = ? AND destination_city = ? AND price = ?",
+		booking.InboundTrip.ArrivalFeeder.Type, booking.InboundTrip.ArrivalFeeder.Budget, booking.InboundTrip.ArrivalFeeder.OriginCity, booking.InboundTrip.ArrivalFeeder.DestinationCity, booking.InboundTrip.ArrivalFeeder.Price).Scan(&inboundArrivalFeederID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("Inserting inbound trip into trip table")
+	_, err = tx.Exec("INSERT INTO trip (departure_feeder, trunk, arrival_feeder, total_price) VALUES (?, ?, ?, ?)",
+		inboundDepartureFeederID, inboundTrunkID, inboundArrivalFeederID, booking.InboundTrip.TotalPrice)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var outboundTripID int
+	err = tx.QueryRow("SELECT id FROM trip WHERE departure_feeder = ? AND trunk = ? AND arrival_feeder = ? AND total_price = ?",
+		outboundDepartureFeederID, outboundTrunkID, outboundArrivalFeederID, booking.OutboundTrip.TotalPrice).Scan(&outboundTripID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var inboundTripID int
+	err = tx.QueryRow("SELECT id FROM trip WHERE departure_feeder = ? AND trunk = ? AND arrival_feeder = ? AND total_price = ?",
+		inboundDepartureFeederID, inboundTrunkID, inboundArrivalFeederID, booking.InboundTrip.TotalPrice).Scan(&inboundTripID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var vacationID int
+	err = tx.QueryRow("SELECT id FROM vacations WHERE city = ? AND hotel_budget = ? AND sightseeing_budget = ? AND total_price = ?",
+		booking.Vacation.City, booking.Vacation.HotelBudget, booking.Vacation.SightseeingBudget, booking.Vacation.TotalPrice).Scan(&vacationID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = tx.Exec("UPDATE bookings SET registrar_email = ?, outbound_trip = ?, vacation = ?, vacation_day_count = ?, inbound_trip = ?, total_days = ?, total_price = ? WHERE id = ?",
+		booking.RegistrarEmail, outboundTripID, vacationID, booking.VacationDayCount, inboundTripID, booking.TotalDays, booking.TotalPrice, bookingID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	if err := tx.Commit(); err != nil {

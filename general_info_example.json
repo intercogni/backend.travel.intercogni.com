@@ -1,0 +1,26 @@
+{
+   "origin_city": {
+      "name": "",
+      "lat": "",
+      "long": ""
+   },
+   "origin_airport_city": {
+      "name": "",
+      "description": "",
+      "lat": "",
+      "long": "",
+      "iata_code": ""
+   },
+   "destination_airport_city": {
+      "name": "",
+      "description": "",
+      "lat": "",
+      "long": "",
+      "iata_code": ""
+   },
+   "destination_city": {
+      "name": "",
+      "lat": "",
+      "long": ""
+   }
+}
